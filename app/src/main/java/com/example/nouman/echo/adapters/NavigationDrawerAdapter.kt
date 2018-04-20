@@ -14,6 +14,7 @@ import com.example.nouman.echo.fragments.AboutUsFragment
 import com.example.nouman.echo.fragments.FavoriteFragment
 import com.example.nouman.echo.fragments.MainScreenFragment
 import com.example.nouman.echo.fragments.SettingsFragment
+import java.util.*
 
 class NavigationDrawerAdapter(_contentList: ArrayList<String>, _getImages: IntArray, _context: Context)
     : RecyclerView.Adapter<NavigationDrawerAdapter.NavViewHolder>() {
