@@ -8,7 +8,38 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"></LinearLayout>
+        android:layout_weight="1">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.cleveroad.audiovisualization.GLAudioVisualizationView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/visualizer_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:av_bubblesSize="25dp"
+                app:av_bubblesRandomizeSizes="true"
+                app:av_wavesHeight="60dp"
+                app:av_wavesFooterHeight="170dp"
+                app:av_wavesCount="50"
+                app:av_layersCount="4"
+                app:av_wavesColors="@array/rainbow"
+                app:av_backgroundColor="#00032a"
+                app:av_bubblesPerLayer="16" />
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/favoriteIcon"
+                android:layout_alignParentRight="true"
+                android:layout_margin="11dp"
+                android:background="@drawable/white_circle_icon"
+                android:src="@drawable/favorite_off"/>
+        </RelativeLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

@@ -14,6 +14,9 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
+import com.cleveroad.audiovisualization.AudioVisualization
+import com.cleveroad.audiovisualization.DbmHandler
+import com.cleveroad.audiovisualization.GLAudioVisualizationView
 import com.example.nouman.echo.CurrentSongHelper
 import com.example.nouman.echo.R
 import com.example.nouman.echo.Songs
@@ -49,6 +52,9 @@ class SongPlayingFragment : Fragment() {
     /*The current song helper is used to store the details of the current song being played*/
     var currentSongHelper: CurrentSongHelper? = null
 
+    var audioVisualization: AudioVisualization? = null
+    var glView: GLAudioVisualizationView? = null
+
     /*Variable used to update the song time*/
     var updateSongTime = object : Runnable{
         override fun run() {
@@ -81,7 +87,15 @@ class SongPlayingFragment : Fragment() {
         shuffleImageButton = view?.findViewById(R.id.shuffleButton)
         songArtistView = view?.findViewById(R.id.songArtist)
         songTitleView = view?.findViewById(R.id.songTitle)
+        glView = view?.findViewById(R.id.visualizer_view)
+
+
         return view
+    }
+
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        audioVisualization = glView as AudioVisualization
     }
 
     override fun onAttach(context: Context?) {
@@ -92,6 +106,21 @@ class SongPlayingFragment : Fragment() {
     override fun onAttach(activity: Activity?) {
         super.onAttach(activity)
         myActivity = activity
+    }
+
+    override fun onResume() {
+        super.onResume()
+        audioVisualization?.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        audioVisualization?.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        audioVisualization?.release()
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -175,6 +204,9 @@ class SongPlayingFragment : Fragment() {
             onSongComplete()
         }
         clickHandler()
+
+        var visualizationHandler = DbmHandler.Factory.newVisualizerHandler(myActivity as Context, 0)
+        audioVisualization?.linkTo(visualizationHandler)
     }
     /*A new click handler function is created to handle all the click functions in the song playing fragment*/
     fun clickHandler() {
