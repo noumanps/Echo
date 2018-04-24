@@ -8,12 +8,14 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.support.v4.app.Fragment
+import android.support.v4.content.ContextCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import com.cleveroad.audiovisualization.AudioVisualization
 import com.cleveroad.audiovisualization.DbmHandler
 import com.cleveroad.audiovisualization.GLAudioVisualizationView
@@ -21,6 +23,7 @@ import com.example.nouman.echo.CurrentSongHelper
 import com.example.nouman.echo.R
 import com.example.nouman.echo.R.id.seekBar
 import com.example.nouman.echo.Songs
+import com.example.nouman.echo.databases.EchoDatabase
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -55,6 +58,12 @@ class SongPlayingFragment : Fragment() {
 
     var audioVisualization: AudioVisualization? = null
     var glView: GLAudioVisualizationView? = null
+
+    /*Declaring variable for handling the favorite button*/
+    var fab: ImageButton? = null
+
+    /*Variable for using DB functions*/
+    var favoriteContent: EchoDatabase? = null
 
     /*Declaring the preferences for the shuffle and loop feature
     * the object is created as we will need them outside the scope of this class*/
@@ -96,7 +105,8 @@ class SongPlayingFragment : Fragment() {
         songArtistView = view?.findViewById(R.id.songArtist)
         songTitleView = view?.findViewById(R.id.songTitle)
         glView = view?.findViewById(R.id.visualizer_view)
-
+        fab = view?.findViewById(R.id.favoriteIcon)
+        fab?.alpha = 0.8f
 
         return view
     }
@@ -134,6 +144,8 @@ class SongPlayingFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
+        /*Initialising the database*/
+        favoriteContent = EchoDatabase(myActivity)
         currentSongHelper = CurrentSongHelper()
         currentSongHelper?.isPlaying = true
         currentSongHelper?.isLoop = false
@@ -256,9 +268,38 @@ class SongPlayingFragment : Fragment() {
             loopImageButton?.setBackgroundResource(R.drawable.loop_white_icon)
             currentSongHelper?.isLoop = false
         }
+        /*Here we check that if the song playing is a favorite, then we show a red colored heart indicating favorite else only the heart boundary
+        * This action is performed whenever a new song is played, hence this will done in the playNext(), playPrevious() and onSongComplete() methods*/
+        if (favoriteContent?.checkifIdExists(currentSongHelper?.songId?.toInt() as Int) as Boolean) {
+            //fab?.setBackgroundResource(R.drawable.favorite_on)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_on))
+        } else {
+            //fab?.setBackgroundResource(R.drawable.favorite_off)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_off))
+        }
     }
     /*A new click handler function is created to handle all the click functions in the song playing fragment*/
     fun clickHandler() {
+
+        fab?.setOnClickListener({
+            /*Here we check that if the song playing is a favorite, then we show a red colored heart indicating favorite else only the heart boundary
+        * This action is performed whenever a new song is played, hence this will done in the playNext(), playPrevious() and onSongComplete() methods*/
+            if (favoriteContent?.checkifIdExists(currentSongHelper?.songId?.toInt() as Int) as Boolean) {
+                //fab?.setBackgroundResource(R.drawable.favorite_on)
+                fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_off ))
+                favoriteContent?.deleteFavourite(currentSongHelper?.songId?.toInt() as Int)
+
+                /*Toast is prompt message at the bottom of screen indicating that an action has been performed*/
+                Toast.makeText(myActivity, "Removed from Favorites", Toast.LENGTH_SHORT).show()
+            } else {
+                //fab?.setBackgroundResource(R.drawable.favorite_off)
+                fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_on))
+                /*If the song was not a favorite, we then add it to the favorites using the method we made in our database*/
+                favoriteContent?.storeAsFavorite(currentSongHelper?.songId?.toInt(), currentSongHelper?.songArtist,
+                        currentSongHelper?.songTitle, currentSongHelper?.songPath)
+                Toast.makeText(myActivity, "Added to Favorites", Toast.LENGTH_SHORT).show()
+            }
+        })
 
         /*The implementation will be taught in the coming topics*/
         shuffleImageButton?.setOnClickListener({
@@ -407,6 +448,15 @@ class SongPlayingFragment : Fragment() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        /*Here we check that if the song playing is a favorite, then we show a red colored heart indicating favorite else only the heart boundary
+        * This action is performed whenever a new song is played, hence this will done in the playNext(), playPrevious() and onSongComplete() methods*/
+        if (favoriteContent?.checkifIdExists(currentSongHelper?.songId?.toInt() as Int) as Boolean) {
+            //fab?.setBackgroundResource(R.drawable.favorite_on)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_on))
+        } else {
+            //fab?.setBackgroundResource(R.drawable.favorite_off)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_off))
+        }
     }
 
     /*The function playPrevious() is used to play the previous song again*/
@@ -446,6 +496,15 @@ class SongPlayingFragment : Fragment() {
 
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+        /*Here we check that if the song playing is a favorite, then we show a red colored heart indicating favorite else only the heart boundary
+        * This action is performed whenever a new song is played, hence this will done in the playNext(), playPrevious() and onSongComplete() methods*/
+        if (favoriteContent?.checkifIdExists(currentSongHelper?.songId?.toInt() as Int) as Boolean) {
+            //fab?.setBackgroundResource(R.drawable.favorite_on)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_on))
+        } else {
+            //fab?.setBackgroundResource(R.drawable.favorite_off)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_off))
         }
     }
 
@@ -488,6 +547,15 @@ class SongPlayingFragment : Fragment() {
                 playNext("PlayNextNormal")
                 currentSongHelper?.isPlaying = true
             }
+        }
+        /*Here we check that if the song playing is a favorite, then we show a red colored heart indicating favorite else only the heart boundary
+        * This action is performed whenever a new song is played, hence this will done in the playNext(), playPrevious() and onSongComplete() methods*/
+        if (favoriteContent?.checkifIdExists(currentSongHelper?.songId?.toInt() as Int) as Boolean) {
+            //fab?.setBackgroundResource(R.drawable.favorite_on)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_on))
+        } else {
+            //fab?.setBackgroundResource(R.drawable.favorite_off)
+            fab?.setImageDrawable(ContextCompat.getDrawable(myActivity, R.drawable.favorite_off))
         }
     }
 

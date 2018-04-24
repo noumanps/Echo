@@ -5,29 +5,38 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.example.nouman.echo.Songs
+import com.example.nouman.echo.databases.EchoDatabase.Staticated.COLUMN_SONG_ARTIST
+import com.example.nouman.echo.databases.EchoDatabase.Staticated.COLUMN_SONG_PATH
+import com.example.nouman.echo.databases.EchoDatabase.Staticated.COLUMN_SONG_TITLE
+import com.example.nouman.echo.databases.EchoDatabase.Staticated.DB_NAME
+import com.example.nouman.echo.databases.EchoDatabase.Staticated.DB_VERSION
+import com.example.nouman.echo.databases.EchoDatabase.Staticated.TABLE_NAME
 
 class EchoDatabase: SQLiteOpenHelper {
     var _songList = ArrayList<Songs>()
 
-    /*Let's define some params for our database
+    object Staticated{
+        /*Let's define some params for our database
     * All the below params are case-sensitive and should be used with the same case*/
-    /*Database Name*/
-    val DB_NAME = "FavoriteDatabase"
 
-    /*Name of the table*/
-    val TABLE_NAME = "FavoriteTable"
+        /*Name of the table*/
+        val TABLE_NAME = "FavoriteTable"
 
-    /*Name of column 1*/
-    val COLUMN_ID = "SongID"
+        /*Name of column 1*/
+        val COLUMN_ID = "SongID"
 
-    /*Name of column 2*/
-    val COLUMN_SONG_TITLE = "SongTitle"
+        /*Name of column 2*/
+        val COLUMN_SONG_TITLE = "SongTitle"
 
-    /*Name of column 3*/
-    val COLUMN_SONG_ARTIST = "SongArtist"
+        /*Name of column 3*/
+        val COLUMN_SONG_ARTIST = "SongArtist"
 
-    /*Name of column 4*/
-    val COLUMN_SONG_PATH = "SongPath"
+        /*Name of column 4*/
+        val COLUMN_SONG_PATH = "SongPath"
+        /*Database Name*/
+        val DB_NAME = "FavoriteDatabase"
+        var DB_VERSION = 1
+    }
 
     /*This function is called when the application first creates the database
     * If already a table with the same name is present in the database, then this method is skipped*/
@@ -42,9 +51,9 @@ class EchoDatabase: SQLiteOpenHelper {
         *  SongArtist STRING,
         *  SongTitle STRING,
         *  SongPath STRING);"  */
-        sqliteDatabase?.execSQL("CREATE TABLE " + TABLE_NAME + "( " + COLUMN_ID +
-                " INTEGER," + COLUMN_SONG_ARTIST + " STRING," + COLUMN_SONG_TITLE + " STRING,"
-                + COLUMN_SONG_PATH + " STRING);")
+        sqliteDatabase?.execSQL("CREATE TABLE " + Staticated.TABLE_NAME + "( " + Staticated.COLUMN_ID +
+                " INTEGER," + Staticated.COLUMN_SONG_ARTIST + " STRING," + Staticated.COLUMN_SONG_TITLE + " STRING,"
+                + Staticated.COLUMN_SONG_PATH + " STRING);")
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
@@ -52,6 +61,7 @@ class EchoDatabase: SQLiteOpenHelper {
     }
 
     constructor(context: Context?, name: String?, factory: SQLiteDatabase.CursorFactory?, version: Int) : super(context, name, factory, version) {}
+    constructor(context: Context?) : super(context, Staticated.DB_NAME, null, Staticated.DB_VERSION) {}
 
     /*As the name suggests, this function is used to store the songs as favorites*/
     fun storeAsFavorite(id: Int?, artist: String?, songTitle: String?, path: String?) {
@@ -63,14 +73,14 @@ class EchoDatabase: SQLiteOpenHelper {
         val contentValues = ContentValues()
 
         /*The .put() function is used for adding the values to the content values object*/
-        contentValues.put(COLUMN_ID, id)
-        contentValues.put(COLUMN_SONG_ARTIST, artist)
-        contentValues.put(COLUMN_SONG_TITLE, songTitle)
-        contentValues.put(COLUMN_SONG_PATH, path)
+        contentValues.put(Staticated.COLUMN_ID, id)
+        contentValues.put(Staticated.COLUMN_SONG_ARTIST, artist)
+        contentValues.put(Staticated.COLUMN_SONG_TITLE, songTitle)
+        contentValues.put(Staticated.COLUMN_SONG_PATH, path)
 
         /*Here we use the insert function to insert the values into the table whose name is specified using the TABLE_NAME
         * and the values which are added are the content values*/
-        db.insert(TABLE_NAME, null, contentValues)
+        db.insert(Staticated.TABLE_NAME, null, contentValues)
 
         /*After performing the db actions, we are required to close the database in-order to prevent any data leakage and saving the resources*/
         db.close()
@@ -87,7 +97,7 @@ class EchoDatabase: SQLiteOpenHelper {
             /*The SQL query used for obtaining the songs is :
             * SELECT * FROM FavoriteTable
             * The query returns all the items present in the table*/
-            val query_params = "SELECT * FROM " + TABLE_NAME
+            val query_params = "SELECT * FROM " + Staticated.TABLE_NAME
             var cSor = db.rawQuery(query_params, null)
 
             /*The cSor stores the result obtained from the database
@@ -97,10 +107,10 @@ class EchoDatabase: SQLiteOpenHelper {
                 /*If 1 or more rows are returned then we store all the entries into the array list _songList*/
                 do {
 
-                    var _id = cSor.getInt(cSor.getColumnIndexOrThrow(COLUMN_ID))
-                    var _artist = cSor.getString(cSor.getColumnIndexOrThrow(COLUMN_SONG_ARTIST))
-                    var _title = cSor.getString(cSor.getColumnIndexOrThrow(COLUMN_SONG_TITLE))
-                    var _songPath = cSor.getString(cSor.getColumnIndexOrThrow(COLUMN_SONG_PATH))
+                    var _id = cSor.getInt(cSor.getColumnIndexOrThrow(Staticated.COLUMN_ID))
+                    var _artist = cSor.getString(cSor.getColumnIndexOrThrow(Staticated.COLUMN_SONG_ARTIST))
+                    var _title = cSor.getString(cSor.getColumnIndexOrThrow(Staticated.COLUMN_SONG_TITLE))
+                    var _songPath = cSor.getString(cSor.getColumnIndexOrThrow(Staticated.COLUMN_SONG_PATH))
                     _songList.add(Songs(_id.toLong(), _title, _artist, _songPath, 0))
                 }
 
@@ -133,13 +143,13 @@ class EchoDatabase: SQLiteOpenHelper {
 
         /*The query for checking the if id is present or not is
         * SELECT * FROM FavoriteTable WHERE SongID = <id_of_our_song>*/
-        val query_params = "SELECT * FROM " + TABLE_NAME + " WHERE SongID = '$_id'"
+        val query_params = "SELECT * FROM " + Staticated.TABLE_NAME + " WHERE SongID = '$_id'"
         val cSor = db.rawQuery(query_params, null)
         if (cSor.moveToFirst()) {
             do {
 
                 /*Storing the song id into the variable storeId*/
-                storeId = cSor.getInt(cSor.getColumnIndexOrThrow(COLUMN_ID))
+                storeId = cSor.getInt(cSor.getColumnIndexOrThrow(Staticated.COLUMN_ID))
             } while (cSor.moveToNext())
         } else {
             return false
@@ -155,7 +165,7 @@ class EchoDatabase: SQLiteOpenHelper {
         val db = this.writableDatabase
 
         /*The delete query is used to perform the delete function*/
-        db.delete(TABLE_NAME, COLUMN_ID + " = " + _id, null)
+        db.delete(TABLE_NAME, Staticated.COLUMN_ID + " = " + _id, null)
 
         /*Here is also we close the database connection
         * Note that we only close the database whenever we open in writable mode*/
