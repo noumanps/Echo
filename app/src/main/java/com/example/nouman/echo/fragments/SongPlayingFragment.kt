@@ -19,6 +19,7 @@ import com.cleveroad.audiovisualization.DbmHandler
 import com.cleveroad.audiovisualization.GLAudioVisualizationView
 import com.example.nouman.echo.CurrentSongHelper
 import com.example.nouman.echo.R
+import com.example.nouman.echo.R.id.seekBar
 import com.example.nouman.echo.Songs
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -54,6 +55,13 @@ class SongPlayingFragment : Fragment() {
 
     var audioVisualization: AudioVisualization? = null
     var glView: GLAudioVisualizationView? = null
+
+    /*Declaring the preferences for the shuffle and loop feature
+    * the object is created as we will need them outside the scope of this class*/
+    object Staticated {
+        var MY_PREFS_SHUFFLE = "Shuffle feature"
+        var MY_PREFS_LOOP = "Loop feature"
+    }
 
     /*Variable used to update the song time*/
     var updateSongTime = object : Runnable{
@@ -207,20 +215,83 @@ class SongPlayingFragment : Fragment() {
 
         var visualizationHandler = DbmHandler.Factory.newVisualizerHandler(myActivity as Context, 0)
         audioVisualization?.linkTo(visualizationHandler)
+
+        /*Now we want that when if user has turned shuffle or loop ON, then these settings should persist even if the app is restarted after closing
+        * This is done with the help of Shared Preferences
+        * Shared preferences are capable of storing small amount of data in the form of key-value pair*/
+
+        /*Here we initialize the preferences for shuffle in a private mode
+        * Private mode is chosen so that so other app us able to read the preferences apart from our app*/
+        var prefsForShuffle = myActivity?.getSharedPreferences(Staticated.MY_PREFS_SHUFFLE, Context.MODE_PRIVATE)
+
+        /*Here we extract the value of preferences and check if shuffle was ON or not*/
+        var isShuffleAllowed = prefsForShuffle?.getBoolean("feature", false)
+        if (isShuffleAllowed as Boolean) {
+
+            /*if shuffle was found activated, then we change the icon color and tun loop OFF*/
+            currentSongHelper?.isShuffle = true
+            currentSongHelper?.isLoop = false
+            shuffleImageButton?.setBackgroundResource(R.drawable.shuffle_icon)
+            loopImageButton?.setBackgroundResource(R.drawable.loop_white_icon)
+        } else {
+            /*Else default is set*/
+            currentSongHelper?.isShuffle = false
+            shuffleImageButton?.setBackgroundResource(R.drawable.shuffle_white_icon)
+        }
+        /*Similar to the shuffle we check the value for loop activation*/
+        var prefsForLoop = myActivity?.getSharedPreferences(Staticated.MY_PREFS_LOOP, Context.MODE_PRIVATE)
+
+        /*Here we extract the value of preferences and check if loop was ON or not*/
+        var isLoopAllowed = prefsForLoop?.getBoolean("feature", false)
+        if (isLoopAllowed as Boolean) {
+
+            /*If loop was activated we change the icon color and shuffle is turned OFF */
+            currentSongHelper?.isShuffle = false
+            currentSongHelper?.isLoop = true
+            shuffleImageButton?.setBackgroundResource(R.drawable.shuffle_white_icon)
+            loopImageButton?.setBackgroundResource(R.drawable.loop_icon)
+        } else {
+
+            /*Else defaults are used*/
+            loopImageButton?.setBackgroundResource(R.drawable.loop_white_icon)
+            currentSongHelper?.isLoop = false
+        }
     }
     /*A new click handler function is created to handle all the click functions in the song playing fragment*/
     fun clickHandler() {
 
         /*The implementation will be taught in the coming topics*/
         shuffleImageButton?.setOnClickListener({
+
+            /*Initializing the shared preferences in private mode
+            * edit() used so that we can overwrite the preferences*/
+            var editorShuffle = myActivity?.getSharedPreferences(Staticated.MY_PREFS_SHUFFLE, Context.MODE_PRIVATE)?.edit()
+            var editorLoop = myActivity?.getSharedPreferences(Staticated.MY_PREFS_LOOP, Context.MODE_PRIVATE)?.edit()
+
             if(currentSongHelper?.isShuffle as Boolean){
                 shuffleImageButton?.setBackgroundResource(R.drawable.shuffle_white_icon)
                 currentSongHelper?.isShuffle = false
+                /*If shuffle was activated previously, then we deactivate it*/
+                /*The putBoolean() method is used for saving the boolean value against the key which is feature here*/
+
+                /*Now the preferences agains the block Shuffle feature will have a key: feature and its value: false*/
+                editorShuffle?.putBoolean("feature", false)
+                editorShuffle?.apply()
+
             } else{
                 currentSongHelper?.isShuffle = true
                 currentSongHelper?.isLoop = false
                 shuffleImageButton?.setBackgroundResource(R.drawable.shuffle_icon)
                 loopImageButton?.setBackgroundResource(R.drawable.loop_white_icon)
+
+                /*Else shuffle is activated and if loop was activated then loop is deactivated*/
+                editorShuffle?.putBoolean("feature", true)
+                editorShuffle?.apply()
+
+
+                /*Similar to shuffle, the loop feature has a key:feature and its value:false*/
+                editorLoop?.putBoolean("feature", false)
+                editorLoop?.apply()
             }
         })
         nextImageButton?.setOnClickListener({
@@ -246,14 +317,17 @@ class SongPlayingFragment : Fragment() {
             playPrevious()
         })
         loopImageButton?.setOnClickListener({
-            /*if loop was enabled, we turn it off and vice versa*/
-            if (currentSongHelper?.isLoop as Boolean) {
 
-                /*Making the isLoop false*/
-                currentSongHelper?.isLoop = false
+            /*The operation on preferences is completely analogous to shuffle, no addition is there*/
+            var editorShuffle = myActivity?.getSharedPreferences(Staticated.MY_PREFS_SHUFFLE, Context.MODE_PRIVATE)?.edit()
+            var editorLoop = myActivity?.getSharedPreferences(Staticated.MY_PREFS_LOOP, Context.MODE_PRIVATE)?.edit()
 
-                /*We change the color of the icon*/
-                loopImageButton?.setBackgroundResource(R.drawable.loop_white_icon)
+
+            if (currentSongHelper?.isLoop as Boolean) {                                 /*if loop was enabled, we turn it off and vice versa*/
+                currentSongHelper?.isLoop = false                                       /*Making the isLoop false*/
+                loopImageButton?.setBackgroundResource(R.drawable.loop_white_icon)      /*We change the color of the icon*/
+                editorLoop?.putBoolean("feature", false)
+                editorLoop?.apply()
             } else {
 
                 /*If loop was not enabled when tapped, we enable if and make the isLoop to true*/
@@ -267,6 +341,11 @@ class SongPlayingFragment : Fragment() {
 
                 /*Changing the shuffle button to white, no matter which color it was earlier*/
                 shuffleImageButton?.setBackgroundResource(R.drawable.shuffle_white_icon)
+
+                editorShuffle?.putBoolean("feature", false)
+                editorShuffle?.apply()
+                editorLoop?.putBoolean("feature", true)
+                editorLoop?.apply()
             }
         })
 
