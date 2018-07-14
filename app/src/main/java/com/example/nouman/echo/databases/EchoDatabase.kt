@@ -12,10 +12,10 @@ import com.example.nouman.echo.databases.EchoDatabase.Staticated.DB_NAME
 import com.example.nouman.echo.databases.EchoDatabase.Staticated.DB_VERSION
 import com.example.nouman.echo.databases.EchoDatabase.Staticated.TABLE_NAME
 
-class EchoDatabase: SQLiteOpenHelper {
+class EchoDatabase : SQLiteOpenHelper {
     var _songList = ArrayList<Songs>()
 
-    object Staticated{
+    object Staticated {
         /*Let's define some params for our database
     * All the below params are case-sensitive and should be used with the same case*/
 
@@ -170,5 +170,25 @@ class EchoDatabase: SQLiteOpenHelper {
         /*Here is also we close the database connection
         * Note that we only close the database whenever we open in writable mode*/
         db.close()
+    }
+
+    /*The function checkSize() is used to calculate whether we have any song as favorite or not*/
+    fun checkSize(): Int {
+        var counter = 0
+        val db = this.readableDatabase
+        var query_params = "SELECT * FROM " + TABLE_NAME
+        /*Here the cursor(cSor) stores the entries returned by the database*/
+        val cSor = db.rawQuery(query_params, null)
+        /*We add 1 to the counter for every entry*/
+        if (cSor.moveToFirst()) {
+            do {
+                counter = counter + 1
+            } while (cSor.moveToNext())
+        } else {
+            return 0
+        }
+
+        /*returning the counter will return the number of elements in the database*/
+        return counter
     }
 }
